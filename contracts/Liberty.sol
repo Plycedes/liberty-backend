@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.24;
 
+//author: @plycedes
+
 contract Liberty {
     struct Petition{
         address owner;
@@ -16,7 +18,8 @@ contract Liberty {
         uint256 numberOfPetitons
     );
     event VoteCasted(
-        uint256 numberOfVoters
+        uint256 numberOfVoters,
+        address[] voters
     );
 
     mapping(uint256 => Petition) public petitons;
@@ -36,12 +39,19 @@ contract Liberty {
     }
 
     function voteToPetition(uint256 _id) public {
+        require(_id < numberOfPetitions, "Petition does not exists");
         petitons[_id].votes++;
         petitons[_id].voters.push(msg.sender);
-        emit VoteCasted(petitons[_id].votes);
+        emit VoteCasted(petitons[_id].votes, petitons[_id].voters);
     }
 
-    function getPetitions() public view {
+    function getPetitions() public view returns(Petition[] memory) {
+        Petition[] memory allPetitions = new Petition[](numberOfPetitions);
 
+        for(uint i = 0; i < numberOfPetitions; i++){
+            allPetitions[i] = petitons[i];
+        }
+
+        return allPetitions;
     }
 }

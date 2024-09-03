@@ -1,12 +1,12 @@
-const { assert } = require("chai");
+const { assert, expect } = require("chai");
 
 describe("Liberty", async () => {
     let liberty, deployer, owner, title, description, image;
 
     beforeEach(async () => {
         liberty = await ethers.deployContract("Liberty");
-        deployer = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-        owner = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+        deployer = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+        owner = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
         title = "King Abhay";
         description = "Make Abhay the King";
         image = "abhay.png";
@@ -17,7 +17,6 @@ describe("Liberty", async () => {
             const initalNum = Number(await liberty.numberOfPetitions());
             const tx = await liberty.createPetition(owner, title, description, image);
             const tr = await tx.wait();
-            //console.log(tr.logs[0].args[0]);
             const finalNum = Number(tr.logs[0].args[0]);
             assert.equal(initalNum + 1, finalNum);
         });
@@ -28,11 +27,34 @@ describe("Liberty", async () => {
             const tx = await liberty.createPetition(owner, title, description, image);
             await tx.wait();
         });
+        it("Reverts if the petition does not exists", async () => {
+            await expect(liberty.voteToPetition(1)).to.be.reverted;
+        });
         it("Casts vote", async () => {
-            const tx = await liberty.voteToPetition(1);
+            const tx = await liberty.voteToPetition(0);
             const tr = await tx.wait();
             const votes = Number(tr.logs[0].args[0]);
             assert.equal(1, votes);
+        });
+        it("Maps voters", async () => {
+            const [signer] = await ethers.getSigners();
+            const tx = await liberty.voteToPetition(0);
+            const tr = await tx.wait();
+            const voter = tr.logs[0].args[1][0];
+            assert.equal(signer.address, voter);
+        });
+    });
+
+    describe("getPetitions", async () => {
+        beforeEach(async () => {
+            const tx = await liberty.createPetition(owner, title, description, image);
+            await tx.wait();
+        });
+        it("Returns all petitions", async () => {
+            const initialNum = Number(await liberty.numberOfPetitions());
+            await liberty.voteToPetition(0);
+            const response = await liberty.getPetitions();
+            assert.equal(initialNum, response.length);
         });
     });
 });
