@@ -17,7 +17,7 @@ describe("Liberty", async () => {
             const initalNum = Number(await liberty.numberOfPetitions());
             const tx = await liberty.createPetition(owner, title, description, image);
             const tr = await tx.wait();
-            const finalNum = Number(tr.logs[0].args[0]);
+            const finalNum = Number(await liberty.numberOfPetitions());
             assert.equal(initalNum + 1, finalNum);
         });
     });
@@ -33,14 +33,16 @@ describe("Liberty", async () => {
         it("Casts vote", async () => {
             const tx = await liberty.voteToPetition(0);
             const tr = await tx.wait();
-            const votes = Number(tr.logs[0].args[0]);
+            const response = await liberty.getPetitions();
+            const votes = Number(response[0].votes);
             assert.equal(1, votes);
         });
         it("Maps voters", async () => {
             const [signer] = await ethers.getSigners();
             const tx = await liberty.voteToPetition(0);
             const tr = await tx.wait();
-            const voter = tr.logs[0].args[1][0];
+            const response = await liberty.getPetitions();
+            const voter = response[0].voters[0];
             assert.equal(signer.address, voter);
         });
     });
